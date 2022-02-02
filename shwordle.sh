@@ -1,13 +1,8 @@
 #!/usr/bin/env bash
-### ==============================================================================
-### SO HOW DO YOU PROCEED WITH YOUR SCRIPT?
-### 1. define the flags/options/parameters and defaults you need in list_options()
-### 2. implement the different actions in main() with helper functions
-### 3. implement helper functions you defined in previous step
-### ==============================================================================
 
 ### Created by Peter Forret ( pforret ) on 2022-02-02
 ### Based on https://github.com/pforret/bashew 1.16.9
+### Inspired by https://gist.github.com/huytd/6a1a6a7b34a0d0abcac00b47e3d01513
 script_version="0.0.1" # if there is a VERSION.md in this script's folder, it will take priority for version number
 readonly script_author="peter@forret.com"
 readonly script_created="2022-02-02"
@@ -47,8 +42,10 @@ flag|v|verbose|output more
 flag|f|force|do not ask for confirmation (always yes)
 option|l|log_dir|folder for log files |$HOME/log/$script_prefix
 option|t|tmp_dir|folder for temp files|/tmp/$script_prefix
-param|1|action|action to perform: action1/action2
-param|?|input|input file/text
+option|e|letters|word length|5
+option|g|guesses|allowed guesses|6
+option|u|language|word language|en-us
+param|1|action|action to perform: word/options
 " | grep -v '^#' | grep -v '^\s*$'
 }
 
@@ -61,16 +58,16 @@ main() {
 
   action=$(lower_case "$action")
   case $action in
-  action1)
-    #TIP: use «$script_prefix action1» to ...
-    #TIP:> $script_prefix action1 input.txt
-    do_action1
+  word)
+    #TIP: use «$script_prefix word» to start guessing a word
+    #TIP:> $script_prefix word
+    do_word
     ;;
 
-  action2)
-    #TIP: use «$script_prefix action2» to ...
-    #TIP:> $script_prefix action2 input.txt output.pdf
-    do_action2
+  options)
+    #TIP: use «$script_prefix options» to show all possible options
+    #TIP:> $script_prefix options
+    do_options
     ;;
 
   check | env)
@@ -102,17 +99,73 @@ main() {
 ## Put your helper scripts here
 #####################################################################
 
-do_action1() {
-  log_to_file "action1"
-  # Examples of required binaries/scripts and how to install them
-  require_binary "convert" "imagemagick"
-  # require_binary "progressbar" "basher install pforret/progressbar"
-  # (code)
+do_word() {
+  log_to_file "word"
+
+  case "$language" in
+    en-us|en)  dictionary="$script_install_folder/dict/en-us.txt"
+                ;;
+    nl-nl|nl)  dictionary="$script_install_folder/dict/nl-nl.txt"
+                ;;
+    fr-fr|fr)  dictionary="$script_install_folder/dict/fr-fr.txt"
+                ;;
+    *)  die "No dictionary for language [$languages]"
+  esac
+  debug "Dictionary = [$dictionary]"
+  words=($(grep '^\w\w\w\w\w$' /usr/share/dict/words | tr '[a-z]' '[A-Z]'))
+  actual=${words[$[$RANDOM % ${#words[@]}]]} 
+  end=false 
+  guess_count=0 
+
+  while [[ $end != true ]]; do
+      guess_count=$(( $guess_count + 1 ))
+      if [[ $guess_count -le $guesses ]]; then
+          echo "Enter your guess ($guess_count / $guesses):"
+          read guess
+          guess=$(echo $guess | tr '[a-z]' '[A-Z]')
+          if [[ " ${words[*]} " =~ " $guess " ]]; then
+              output="" remaining=""
+              if [[ $actual == $guess ]]; then
+                  echo "You guessed right!"
+                  for ((i = 0; i < ${#actual}; i++)); do
+                      output+="\033[30;102m ${guess:$i:1} \033[0m"
+                  done
+                  printf "$output\n"
+                  end=true
+              else
+                  for ((i = 0; i < ${#actual}; i++)); do
+                      if [[ "${actual:$i:1}" != "${guess:$i:1}" ]]; then
+                          remaining+=${actual:$i:1}
+                      fi
+                  done
+                  for ((i = 0; i < ${#actual}; i++)); do
+                      if [[ "${actual:$i:1}" != "${guess:$i:1}" ]]; then
+                          if [[ "$remaining" == *"${guess:$i:1}"* ]]; then
+                              output+="\033[30;103m ${guess:$i:1} \033[0m"
+                              remaining=${remaining/"${guess:$i:1}"/}
+                          else
+                              output+="\033[30;107m ${guess:$i:1} \033[0m"
+                          fi
+                      else
+                          output+="\033[30;102m ${guess:$i:1} \033[0m"
+                      fi
+                  done
+                  printf "$output\n"
+              fi
+          else
+              echo "Please enter a valid word with 5 letters!";
+              guess_count=$(( $guess_count - 1 ))
+          fi
+      else
+          echo "You lose! The word is:"
+          echo $actual
+          end=true
+      fi
+  done
 }
 
-do_action2() {
-  log_to_file "action2"
-  # (code)
+do_options() {
+  log_to_file "options"
 
 }
 
