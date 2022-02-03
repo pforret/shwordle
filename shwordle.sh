@@ -8,32 +8,12 @@ readonly script_author="peter@forret.com"
 readonly script_created="2022-02-02"
 readonly run_as_root=-1 # run_as_root: 0 = don't check anything / 1 = script MUST run as root / -1 = script MAY NOT run as root
 
-## some initialisation
 action=""
 script_prefix=""
 script_basename=""
 install_package=""
 
 list_options() {
-  ### Change the next lines to reflect which flags/options/parameters you need
-  ### flag:   switch a flag 'on' / no value specified
-  ###     flag|<short>|<long>|<description>
-  ###     e.g. "-v" or "--verbose" for verbose output / default is always 'off'
-  ###     will be available as $<long> in the script e.g. $verbose
-  ### option: set an option / 1 value specified
-  ###     option|<short>|<long>|<description>|<default>
-  ###     e.g. "-e <extension>" or "--extension <extension>" for a file extension
-  ###     will be available a $<long> in the script e.g. $extension
-  ### list: add an list/array item / 1 value specified
-  ###     list|<short>|<long>|<description>| (default is ignored)
-  ###     e.g. "-u <user1> -u <user2>" or "--user <user1> --user <user2>"
-  ###     will be available a $<long> array in the script e.g. ${user[@]}
-  ### param:  comes after the options
-  ###     param|<type>|<long>|<description>
-  ###     <type> = 1 for single parameters - e.g. param|1|output expects 1 parameter <output>
-  ###     <type> = ? for optional parameters - e.g. param|1|output expects 1 parameter <output>
-  ###     <type> = n for list parameter    - e.g. param|n|inputs expects <input1> <input2> ... <input99>
-  ###     will be available as $<long> in the script after option/param parsing
   echo -n "
 #commented lines will be filtered
 flag|h|help|show usage
@@ -58,7 +38,7 @@ main() {
 
   action=$(lower_case "$action")
   case $action in
-  word)
+  word|play)
     #TIP: use «$script_prefix word» to start guessing a word
     #TIP:> $script_prefix word
     do_word
@@ -68,6 +48,12 @@ main() {
     #TIP: use «$script_prefix options» to show all possible options
     #TIP:> $script_prefix options
     do_options
+    ;;
+
+  dict)
+    #TIP: use «$script_prefix options» to show all possible options
+    #TIP:> $script_prefix options
+    do_clean_dict
     ;;
 
   check | env)
@@ -99,6 +85,27 @@ main() {
 ## Put your helper scripts here
 #####################################################################
 
+do_clean_dict(){
+
+  local temp_dict
+  for dict in "$script_install_folder/dict/"*.txt ; do
+    debug "$(wc -l "$dict")"
+    temp_dict="$tmp_dir/$(basename "$dict" .txt).temp.txt"
+    < "$dict" tr '[:lower:]' '[:upper:]' \
+    | awk '
+        function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
+        function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
+        function trim(s) { return rtrim(ltrim(s)); }
+        {
+          $1=trim($1);
+          print $1
+        }' \
+    | sort -u > "$temp_dict"
+    debug "$(wc -l "$temp_dict")"
+    cp "$temp_dict" "$dict"
+  done
+}
+
 do_word() {
   log_to_file "word"
 
@@ -109,37 +116,46 @@ do_word() {
                 ;;
     fr-fr|fr)  dictionary="$script_install_folder/dict/fr-fr.txt"
                 ;;
-    *)  die "No dictionary for language [$languages]"
+    *)  die "No dictionary for language [$language]"
   esac
   debug "Dictionary = [$dictionary]"
-  words=($(grep '^\w\w\w\w\w$' /usr/share/dict/words | tr '[a-z]' '[A-Z]'))
-  actual=${words[$[$RANDOM % ${#words[@]}]]} 
+  local selection_file
+  local selection_count
+  local correct_number
+  selection_file=$(filter_dictionary "$dictionary" "$letters")
+  debug "Only $letters letters = [$selection_file]"
+  selection_count=$(< "$selection_file" wc -l)
+  correct_number=$((RANDOM % selection_count))
+  debug "Pick # $correct_number from $selection_count"
+  correct=$(head -$correct_number "$selection_file" | tail -1)
   end=false 
   guess_count=0 
 
+  local type_here="_________________________________"
+  type_here=${type_here:0:$letters}
   while [[ $end != true ]]; do
       guess_count=$(( $guess_count + 1 ))
       if [[ $guess_count -le $guesses ]]; then
-          echo "Enter your guess ($guess_count / $guesses):"
+          printf "$type_here << Enter your guess ($guess_count / $guesses)\r"
           read guess
           guess=$(echo $guess | tr '[a-z]' '[A-Z]')
-          if [[ " ${words[*]} " =~ " $guess " ]]; then
+          if grep -q -E "^$guess$" "$selection_file" ; then
               output="" remaining=""
-              if [[ $actual == $guess ]]; then
-                  echo "You guessed right!"
-                  for ((i = 0; i < ${#actual}; i++)); do
+              if [[ "$correct" == "$guess" ]]; then
+                  success "You guessed right!"
+                  for ((i = 0; i < ${#correct}; i++)); do
                       output+="\033[30;102m ${guess:$i:1} \033[0m"
                   done
-                  printf "$output\n"
+                  out "$output"
                   end=true
               else
-                  for ((i = 0; i < ${#actual}; i++)); do
-                      if [[ "${actual:$i:1}" != "${guess:$i:1}" ]]; then
-                          remaining+=${actual:$i:1}
+                  for ((i = 0; i < ${#correct}; i++)); do
+                      if [[ "${correct:$i:1}" != "${guess:$i:1}" ]]; then
+                          remaining+=${correct:$i:1}
                       fi
                   done
-                  for ((i = 0; i < ${#actual}; i++)); do
-                      if [[ "${actual:$i:1}" != "${guess:$i:1}" ]]; then
+                  for ((i = 0; i < ${#correct}; i++)); do
+                      if [[ "${correct:$i:1}" != "${guess:$i:1}" ]]; then
                           if [[ "$remaining" == *"${guess:$i:1}"* ]]; then
                               output+="\033[30;103m ${guess:$i:1} \033[0m"
                               remaining=${remaining/"${guess:$i:1}"/}
@@ -150,15 +166,15 @@ do_word() {
                           output+="\033[30;102m ${guess:$i:1} \033[0m"
                       fi
                   done
-                  printf "$output\n"
+                  out "$output"
               fi
           else
-              echo "Please enter a valid word with 5 letters!";
+              out "$col_red Please enter a valid word with $letters letters!$col_reset";
               guess_count=$(( $guess_count - 1 ))
           fi
       else
           echo "You lose! The word is:"
-          echo $actual
+          echo $correct
           end=true
       fi
   done
@@ -169,6 +185,27 @@ do_options() {
 
 }
 
+filter_dictionary(){
+  local dictionary="$1"
+  local letters="$2"
+  require_binary awk
+  local cache
+  cache="$tmp_dir/$(basename "$dictionary" .txt).$letters.txt"
+  if [[ ! -f "$cache" ]] ; then
+    < "$dictionary" awk -v letters=$letters '
+        function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
+        function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
+        function trim(s) { return rtrim(ltrim(s)); }
+        {
+          $1=trim($1)
+          if(length($1) == letters){
+            print $1
+          }
+        }
+    ' > "$cache"
+  fi
+  echo "$cache"
+}
 #####################################################################
 ################### DO NOT MODIFY BELOW THIS LINE ###################
 #####################################################################
