@@ -104,20 +104,20 @@ do_clean_dict(){
     debug "$(wc -l "$temp_dict")"
     cp "$temp_dict" "$dict"
   done
+  [[ -d "$tmp_dir" ]] && rm "$tmp_dir"/*.txt
 }
 
 do_word() {
   log_to_file "word"
 
   case "$language" in
-    en-us|en)  dictionary="$script_install_folder/dict/en-us.txt"
-                ;;
-    nl-nl|nl)  dictionary="$script_install_folder/dict/nl-nl.txt"
-                ;;
-    fr-fr|fr)  dictionary="$script_install_folder/dict/fr-fr.txt"
-                ;;
+    en-us|en|english)           dictionary="$script_install_folder/dict/en-us.txt" ;;
+    es-es|es|spanish|espanol)   dictionary="$script_install_folder/dict/es-es.txt" ;;
+    fr-fr|fr|french|francais)   dictionary="$script_install_folder/dict/fr-fr.txt" ;;
+    nl-nl|nl|dutch|nederlands)  dictionary="$script_install_folder/dict/nl-nl.txt" ;;
     *)  die "No dictionary for language [$language]"
   esac
+  [[ ! -f "$dictionary" ]] && die "Dictionary [$dictionary] cannot be found"
   debug "Dictionary = [$dictionary]"
   local selection_file
   local selection_count
