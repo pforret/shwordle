@@ -1,4 +1,3 @@
-![bash_unit CI](https://github.com/pforret/shwordle/workflows/bash_unit%20CI/badge.svg)
 ![Shellcheck CI](https://github.com/pforret/shwordle/workflows/Shellcheck%20CI/badge.svg)
 ![GH Language](https://img.shields.io/github/languages/top/pforret/shwordle)
 ![GH stars](https://img.shields.io/github/stars/pforret/shwordle)
@@ -8,31 +7,41 @@
 
 # shwordle
 
-CLI Wordle
+CLI version of Wordle with choice of # letters and choice of langauge
 
 ## 🔥 Usage
 
 ```
-Program: shwordle 0.0.1 by peter@forret.com
-Updated: 2022-02-02
+Program: shwordle 0.1.8 by peter@forret.com
+Updated: Feb  5 14:43:26 2022
 Description: CLI Wordle
-Usage: normal.sh [-h] [-q] [-v] [-f] [-l <log_dir>] [-t <tmp_dir>] <action> <input?>
+Usage: shwordle [-h] [-q] [-v] [-f] [-l <log_dir>] [-t <tmp_dir>] [-e <letters>] [-g <guesses>] [-u <language>] <action>
 Flags, options and parameters:
     -h|--help        : [flag] show usage [default: off]
     -q|--quiet       : [flag] no output [default: off]
     -v|--verbose     : [flag] output more [default: off]
     -f|--force       : [flag] do not ask for confirmation (always yes) [default: off]
-    -l|--log_dir <?> : [option] folder for log files   [default: /Users/pforret/log/normal]
-    -t|--tmp_dir <?> : [option] folder for temp files  [default: .tmp]
-    <action>         : [parameter] action to perform: analyze/convert
-    <input>          : [parameter] input file/text (optional)
+    -l|--log_dir <?> : [option] folder for log files   [default: /Users/pforret/log/shwordle]
+    -t|--tmp_dir <?> : [option] folder for temp files  [default: /tmp/shwordle]
+    -e|--letters <?> : [option] word length  [default: 5]
+    -g|--guesses <?> : [option] allowed guesses  [default: 6]
+    -u|--language <?>: [option] word language  [default: en-us]
+    <action>         : [parameter] action to perform: play/options
 ```
 
 ## ⚡️ Examples
 
 ```bash
-> shwordle .
-# start PhpStorm with current folder as project
+> shwordle play
+# start Shwordle with default options
+
+>shwordle -e 4 play
+# start Showrdle with 4 letter word
+
+>shwordle -u nl play
+# start Shwordle with Dutch words
+
+
 ```
 
 ## 🚀 Installation

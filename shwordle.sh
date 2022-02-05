@@ -206,7 +206,12 @@ do_word() {
 
 do_options() {
   log_to_file "options"
-
+  success "use -e | --letters to choose word length (default: 6)"
+  success "use -u | --language to choose dictionary (default: en)"
+  out "   available languages: "
+  for dict in "$script_install_folder/dict/"*.txt ; do
+    out "   * $(basename "$dict" .txt): $(< $dict wc -l) words"
+    done
 }
 
 filter_dictionary(){
