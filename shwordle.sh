@@ -210,7 +210,7 @@ do_options() {
   success "use -u | --language to choose dictionary (default: en)"
   out "   available languages: "
   for dict in "$script_install_folder/dict/"*.txt ; do
-    out "   * $(basename "$dict" .txt): $(< $dict wc -l) words"
+    out "   * $(basename "$dict" .txt): $(< "$dict" wc -l) words"
     done
 }
 
