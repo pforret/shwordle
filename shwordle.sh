@@ -91,15 +91,27 @@ do_clean_dict(){
   for dict in "$script_install_folder/dict/"*.txt ; do
     debug "$(wc -l "$dict")"
     temp_dict="$tmp_dir/$(basename "$dict" .txt).temp.txt"
-    < "$dict" tr '[:lower:]' '[:upper:]' \
-    | awk '
+    < "$dict" awk '
         function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
         function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
         function trim(s) { return rtrim(ltrim(s)); }
         {
           $1=trim($1);
+          gsub("à","à",$1);
+          gsub("á","a",$1);
+          gsub("â","a",$1);
+          gsub("ç","c",$1);
+          gsub("è","e",$1);
+          gsub("é","e",$1);
+          gsub("ê","e",$1);
+          gsub("ì","i",$1);
+          gsub("í","i",$1);
+          gsub("ñ","n",$1);
+          gsub("ó","o",$1);
+          gsub("ú","u",$1);
           print $1
         }' \
+    | tr '[:lower:]' '[:upper:]' \
     | sort -u > "$temp_dict"
     debug "$(wc -l "$temp_dict")"
     cp "$temp_dict" "$dict"
@@ -135,11 +147,11 @@ do_word() {
   local type_here="_________________________________"
   type_here=${type_here:0:$letters}
   while [[ $end != true ]]; do
-      guess_count=$(( $guess_count + 1 ))
+      guess_count=$(( guess_count + 1 ))
       if [[ $guess_count -le $guesses ]]; then
-          printf "$type_here << Enter your guess ($guess_count / $guesses)\r"
-          read guess
-          guess=$(echo $guess | tr '[a-z]' '[A-Z]')
+          printf "%s << Enter your guess ($%d / %d)\r" $type_here $guess_count $guesses
+          read -r guess
+          guess=$(upper_case "$guess")
           if grep -q -E "^$guess$" "$selection_file" ; then
               output="" remaining=""
               if [[ "$correct" == "$guess" ]]; then
