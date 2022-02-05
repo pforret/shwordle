@@ -121,6 +121,16 @@ do_clean_dict(){
 
 do_word() {
   log_to_file "word"
+  local correct
+  local correct_number
+  local dictionary
+  local end
+  local guess
+  local guess_count
+  local output
+  local remaining
+  local selection_count
+  local selection_file
 
   case "$language" in
     en-us|en|english)           dictionary="$script_install_folder/dict/en-us.txt" ;;
@@ -131,9 +141,6 @@ do_word() {
   esac
   [[ ! -f "$dictionary" ]] && die "Dictionary [$dictionary] cannot be found"
   debug "Dictionary = [$dictionary]"
-  local selection_file
-  local selection_count
-  local correct_number
   selection_file=$(filter_dictionary "$dictionary" "$letters")
   debug "Only $letters letters = [$selection_file]"
   selection_count=$(< "$selection_file" wc -l)
@@ -149,11 +156,12 @@ do_word() {
   while [[ $end != true ]]; do
       guess_count=$(( guess_count + 1 ))
       if [[ $guess_count -le $guesses ]]; then
-          printf "%s << Enter your guess ($%d / %d)\r" $type_here $guess_count $guesses
+          printf "%s << Enter your guess ($%d / %d)\r" "$type_here" "$guess_count" "$guesses"
           read -r guess
           guess=$(upper_case "$guess")
           if grep -q -E "^$guess$" "$selection_file" ; then
-              output="" remaining=""
+              output=""
+              remaining=""
               if [[ "$correct" == "$guess" ]]; then
                   success "You guessed right!"
                   for ((i = 0; i < ${#correct}; i++)); do
@@ -183,11 +191,11 @@ do_word() {
               fi
           else
               out "$col_red Please enter a valid word with $letters letters!$col_reset";
-              guess_count=$(( $guess_count - 1 ))
+              guess_count=$(( guess_count - 1 ))
           fi
       else
-          echo "You lose! The word is:"
-          echo $correct
+          echo "You lose! The word was:"
+          echo "$correct"
           end=true
       fi
   done
@@ -205,7 +213,7 @@ filter_dictionary(){
   local cache
   cache="$tmp_dir/$(basename "$dictionary" .txt).$letters.txt"
   if [[ ! -f "$cache" ]] ; then
-    < "$dictionary" awk -v letters=$letters '
+    < "$dictionary" awk -v letters="$letters" '
         function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
         function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
         function trim(s) { return rtrim(ltrim(s)); }
@@ -283,7 +291,7 @@ initialise_output() {
     clean_icon="[c]"
     require_icon="[r]"
   fi
-  error_prefix="${col_red}>${col_reset}"
+  #error_prefix="${col_red}>${col_reset}"
 }
 
 out() { ((quiet)) && true || printf '%b\n' "$*"; }
