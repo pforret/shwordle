@@ -17,7 +17,7 @@ jobs:
       run: ls ./*.sh | xargs bash
 
     - name: Unit testing with bash_unit
-      run: tests/bash_unit tests/test_*
+      run: bash_unit tests/test_*
 
   macos:
     runs-on: macos-latest
