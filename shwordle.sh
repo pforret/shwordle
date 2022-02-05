@@ -128,6 +128,7 @@ do_word() {
   correct_number=$((RANDOM % selection_count))
   debug "Pick # $correct_number from $selection_count"
   correct=$(head -$correct_number "$selection_file" | tail -1)
+  debug "correct word = $correct"
   end=false 
   guess_count=0 
 
