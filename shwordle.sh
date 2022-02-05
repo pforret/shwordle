@@ -90,6 +90,7 @@ do_clean_dict(){
   local temp_dict
   for dict in "$script_install_folder/dict/"*.txt ; do
     debug "$(wc -l "$dict")"
+    # shellcheck disable=SC2154
     temp_dict="$tmp_dir/$(basename "$dict" .txt).temp.txt"
     < "$dict" awk '
         function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
@@ -132,6 +133,7 @@ do_word() {
   local selection_count
   local selection_file
 
+  # shellcheck disable=SC2154
   case "$language" in
     en-us|en|english)           dictionary="$script_install_folder/dict/en-us.txt" ;;
     es-es|es|spanish|espanol)   dictionary="$script_install_folder/dict/es-es.txt" ;;
@@ -155,6 +157,7 @@ do_word() {
   type_here=${type_here:0:$letters}
   while [[ $end != true ]]; do
       guess_count=$(( guess_count + 1 ))
+    # shellcheck disable=SC2154
       if [[ $guess_count -le $guesses ]]; then
           printf "%s << Enter your guess ($%d / %d)\r" "$type_here" "$guess_count" "$guesses"
           read -r guess
