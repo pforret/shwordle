@@ -41,6 +41,14 @@ Flags, options and parameters:
 >shwordle -u nl play
 # start Shwordle with Dutch words
 
+> ./shwordle options
+✅  use -e | --letters to choose word length (default: 6)
+✅  use -u | --language to choose dictionary (default: en)
+   available languages: 
+   * en-us:     3218 words
+   * es-es:      949 words
+   * fr-fr:     2448 words
+   * nl-nl:     2422 words
 
 ```
 
