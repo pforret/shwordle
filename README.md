@@ -9,6 +9,8 @@
 
 CLI version of Wordle with choice of # letters and choice of langauge
 
+![](/assets/unsplash.word.jpg)
+
 ## 🔥 Usage
 
 ```
