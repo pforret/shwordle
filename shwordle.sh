@@ -397,6 +397,7 @@ ask() {
   fi
 }
 
+    # shellcheck disable=SC2154
 trap "die \"ERROR \$? after \$SECONDS seconds \n\
 \${error_prefix} last command : '\$BASH_COMMAND' \" \
 \$(< \$script_install_path awk -v lineno=\$LINENO \
